@@ -1,6 +1,8 @@
 package aethernia;
 
 import Object.*;
+import entity.Enemy;
+
 public class AssetSetter {
 
     GamePanel gp;
@@ -37,5 +39,11 @@ public class AssetSetter {
         gp.obj[6] = new OBJ_HermesBoot(gp);
         gp.obj[6].worldX = 32 * gp.tileSize;
         gp.obj[6].worldY = 15 * gp.tileSize;
+    }
+
+    public void setEntity() {
+        gp.enemies[0] = new Enemy(gp);
+        gp.enemies[0].worldX = 3 * gp.tileSize;
+        gp.enemies[0].worldY = 7 * gp.tileSize;
     }
 }

@@ -10,6 +10,9 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.JPanel;
+
+import entity.Enemy;
+import entity.Entity;
 import entity.Player;
 import tiles.TileManager;
 import Object.*;
@@ -53,6 +56,7 @@ public class GamePanel extends JPanel implements Runnable{
     //OBJECTS AND ENTITIES
     public Player player = new Player(this,keyH);
     public SuperObject obj[] = new SuperObject[10];
+    public Entity enemies[] = new Entity[10];
     
     public GamePanel() {
         
@@ -66,6 +70,7 @@ public class GamePanel extends JPanel implements Runnable{
 
     public void setupGame() {
         aSetter.setObject();
+        aSetter.setEntity();
         playMusic(0);
     }
     
@@ -120,6 +125,12 @@ public class GamePanel extends JPanel implements Runnable{
     
     // updates the game with components and interactions
     public void update() {
+
+        for (int i = 0; i < enemies.length; i++) {
+            if (enemies[i] != null) {
+                ((Enemy)enemies[i]).update();
+            }
+        }
         
         player.update();
         
@@ -152,6 +163,13 @@ public class GamePanel extends JPanel implements Runnable{
 
         //Player
         player.draw(g2);
+
+        //Enemy
+        for(int i = 0; i< enemies.length; i++) {
+            if(enemies[i] != null) {
+                ((Enemy)enemies[i]).draw(g2);
+            }
+        }
 
         //UI
         ui.draw(g2);
