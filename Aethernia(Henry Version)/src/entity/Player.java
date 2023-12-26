@@ -7,6 +7,7 @@ package entity;
 
 import aethernia.GamePanel;
 import aethernia.KeyHandler;
+import aethernia.UtilityTool;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -23,43 +24,62 @@ public class Player extends Entity{
 
     public final int screenX;
     public final int screenY;
+    public int hasKey = 0;
+    public int hasChestKey = 0;
 
     public Player(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
 
+        //Sets Player camera configuration
         screenX = gp.screenWidth/2 - (gp.tileSize/2);
         screenY = gp.screenHeight/2 - (gp.tileSize/2);
 
         solidArea = new Rectangle(8, 16, 32, 32);
+        solidAreaDefaultX = solidArea.x;
+        solidAreaDefaultY = solidArea.y;
 
         setDefaultValues();
         getPlayerImage();
     }
 
     public void setDefaultValues() {
-        worldX = gp.tileSize * 23;
-        worldY = gp.tileSize * 21;
+        //Sets Player starting position
+        worldX = gp.tileSize * 2;
+        worldY = gp.tileSize * 7;
         speed = 8;
         direction = "right";
     }
 
     public void getPlayerImage() {
+
         //Get Resource from res source folder
-        try{
-            right1 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_WalkR1.png"));
-            right2 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_WalkR2.png"));
-            left1 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_WalkL1.png"));
-            left2 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_WalkL2.png"));
-            up1 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_Walk_U1.png"));
-            up2 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_Walk_U2.png"));
-            down1 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_Walk_D1.png"));
-            down2 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_Walk_D2.png"));
-            idle1 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_IdleR1.png"));
-            idle2 = ImageIO.read(getClass().getResource("/player/Aethernia_Knight_IdleR2.png"));
+        up1 = setup("Aethernia_Knight_Walk_U1");
+        up2 = setup("Aethernia_Knight_Walk_U2");
+        down1 = setup("Aethernia_Knight_Walk_D1");
+        down2 = setup("Aethernia_Knight_Walk_D2");
+        left1 = setup("Aethernia_Knight_WalkL1");
+        left2 = setup("Aethernia_Knight_WalkL2");
+        right1 = setup("Aethernia_Knight_WalkR1");
+        right2 = setup("Aethernia_Knight_WalkR2");
+        idle1 = setup("Aethernia_Knight_IdleR1");
+        idle2 = setup("Aethernia_Knight_IdleR2");
+
+    }
+
+    public BufferedImage setup(String imageName) {
+        UtilityTool uTool = new UtilityTool();
+        BufferedImage image = null;
+
+        try {
+
+            image = ImageIO.read(getClass().getResourceAsStream("/player/" + imageName + ".png"));
+            image = uTool.scaleImage(image, gp.tileSize, gp.tileSize);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return  image;
     }
 
     public void update() {
@@ -94,6 +114,10 @@ public class Player extends Entity{
                 CollisionOn = false;
                 gp.colChecker.checkTile(this);
 
+                //Check object collision
+                int objIndex = gp.colChecker.checkObject(this, true);
+                pickUpObject(objIndex);
+
                 //if collision is false then player can move
                 if(CollisionOn == false) {
 
@@ -126,6 +150,54 @@ public class Player extends Entity{
             }
         }
     }
+
+    public void pickUpObject(int i) {
+        if(i != 999) {
+
+            String objectName = gp.obj[i].name;
+
+            switch (objectName) {
+                case "DoorKey":
+                    hasKey++;
+                    gp.playSE(3);
+                    gp.obj[i] = null;
+                    gp.ui.showMessage("Picked up a key!");
+                    break;
+                case "Door":
+                    if(hasKey > 0) {
+                        gp.obj[i] = null;
+                        hasKey--;
+                        gp.playSE(2);
+                        gp.ui.showMessage("Door opened with key...");
+                    } else {
+                        gp.ui.showMessage("Locked...");
+                    }
+                    break;
+                case "HSword":
+                    break;
+                case "HArmor":
+                    break;
+                case "HermesBoot":
+                    speed += 6;
+                    gp.playSE(1);
+                    gp.obj[i] = null;
+                    gp.ui.showMessage("Godspeed!");
+                    break;
+                case "ChestKey":
+                    hasChestKey++;
+                    gp.playSE(3);
+                    gp.obj[i] = null;
+                    gp.ui.showMessage("Picked up chest key!");
+                    break;
+                case "Chest":
+                    gp.ui.gameEnd = true;
+                    gp.stopMusic();
+                    gp.playSE(4);
+                    break;
+            }
+        }
+    }
+
     public void draw(Graphics2D g2) {
         //g2.setColor(Color.white);
         //g2.fillRect(x, y, gp.tileSize, gp.tileSize);
