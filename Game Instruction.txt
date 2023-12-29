@@ -1,0 +1,14 @@
+Controls
+
+W = up
+S = down
+A = left
+D = right
+
+E = attack/interaction
+esc = menu
+Enter = next dialogue
+P = pause
+
+//DEBUG
+L = draw time
