@@ -1,23 +1,18 @@
 package Object;
 
 import aethernia.GamePanel;
+import entity.Entity;
 
-import javax.imageio.ImageIO;
-import java.io.IOException;
-
-public class OBJ_Chest extends SuperObject{
+public class OBJ_Chest extends Entity {
 
     GamePanel gp;
 
     public OBJ_Chest(GamePanel gp) {
 
+        super(gp);
+
         name = "Chest";
-        try{
-            image = ImageIO.read(getClass().getResourceAsStream("/objects/Chest0.png"));
-            uTool.scaleImage(image, gp.tileSize, gp.tileSize);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        right1 = setup("/objects/Chest0", gp.tileSize, gp.tileSize);
         collision = true;
     }
 }

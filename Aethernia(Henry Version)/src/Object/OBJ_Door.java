@@ -1,23 +1,25 @@
 package Object;
 
 import aethernia.GamePanel;
+import entity.Entity;
 
-import javax.imageio.ImageIO;
-import java.io.IOException;
-
-public class OBJ_Door extends SuperObject{
+public class OBJ_Door extends Entity {
 
     GamePanel gp;
 
     public OBJ_Door(GamePanel gp) {
 
+        super(gp);
+
         name = "Door";
-        try{
-            image = ImageIO.read(getClass().getResourceAsStream("/objects/Door0.png"));
-            uTool.scaleImage(image, gp.tileSize, gp.tileSize);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        right1 = setup("/objects/Door0", gp.tileSize, gp.tileSize);
         collision = true;
+
+        solidArea.x = 0;
+        solidArea.y = 16;
+        solidArea.width = 48;
+        solidArea.height = 32;
+        solidAreaDefaultX = solidArea.x;
+        solidAreaDefaultY = solidArea.y;
     }
 }

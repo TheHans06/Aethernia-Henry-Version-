@@ -19,16 +19,18 @@ import java.io.IOException;
  * @author Acer
  */
 public class Player extends Entity{
-    GamePanel gp;
+
     KeyHandler keyH;
 
     public final int screenX;
     public final int screenY;
     public int hasKey = 0;
     public int hasChestKey = 0;
+    public int idleCounter = 0;
+    public int attackCounter = 0;
 
     public Player(GamePanel gp, KeyHandler keyH) {
-        this.gp = gp;
+        super(gp);
         this.keyH = keyH;
 
         //Sets Player camera configuration
@@ -39,8 +41,12 @@ public class Player extends Entity{
         solidAreaDefaultX = solidArea.x;
         solidAreaDefaultY = solidArea.y;
 
+        attackArea.width = 36;
+        attackArea.height = 36;
+
         setDefaultValues();
         getPlayerImage();
+        getPlayerAttack();
     }
 
     public void setDefaultValues() {
@@ -49,53 +55,60 @@ public class Player extends Entity{
         worldY = gp.tileSize * 7;
         speed = 8;
         direction = "right";
+
+        //Player Status
+        maxLife = 6;
+        life = maxLife;
     }
 
     public void getPlayerImage() {
 
         //Get Resource from res source folder
-        up1 = setup("Aethernia_Knight_Walk_U1");
-        up2 = setup("Aethernia_Knight_Walk_U2");
-        down1 = setup("Aethernia_Knight_Walk_D1");
-        down2 = setup("Aethernia_Knight_Walk_D2");
-        left1 = setup("Aethernia_Knight_WalkL1");
-        left2 = setup("Aethernia_Knight_WalkL2");
-        right1 = setup("Aethernia_Knight_WalkR1");
-        right2 = setup("Aethernia_Knight_WalkR2");
-        idle1 = setup("Aethernia_Knight_IdleR1");
-        idle2 = setup("Aethernia_Knight_IdleR2");
+        up1 = setup("/player/Aethernia_Knight_Walk_U1", gp.tileSize, gp.tileSize);
+        up2 = setup("/player/Aethernia_Knight_Walk_U2", gp.tileSize, gp.tileSize);
+        down1 = setup("/player/Aethernia_Knight_Walk_D1", gp.tileSize, gp.tileSize);
+        down2 = setup("/player/Aethernia_Knight_Walk_D2", gp.tileSize, gp.tileSize);
+        left1 = setup("/player/Aethernia_Knight_WalkL1", gp.tileSize, gp.tileSize);
+        left2 = setup("/player/Aethernia_Knight_WalkL2", gp.tileSize, gp.tileSize);
+        right1 = setup("/player/Aethernia_Knight_WalkR1", gp.tileSize, gp.tileSize);
+        right2 = setup("/player/Aethernia_Knight_WalkR2", gp.tileSize, gp.tileSize);
+        idle1 = setup("/player/Aethernia_Knight_IdleR1", gp.tileSize, gp.tileSize);
+        idle2 = setup("/player/Aethernia_Knight_IdleR2", gp.tileSize, gp.tileSize);
 
     }
 
-    public BufferedImage setup(String imageName) {
-        UtilityTool uTool = new UtilityTool();
-        BufferedImage image = null;
+    public void getPlayerAttack() {
 
-        try {
+        attackU1 = setup("/player/Aethernia_Knight_AttackU1", gp.tileSize, gp.tileSize*2);
+        attackU2 = setup("/player/Aethernia_Knight_AttackU2", gp.tileSize, gp.tileSize*2);
+        attackD1 = setup("/player/Aethernia_Knight_AttackD1", gp.tileSize, gp.tileSize*2);
+        attackD2 = setup("/player/Aethernia_Knight_AttackD2", gp.tileSize, gp.tileSize*2);
+        attackL1 = setup("/player/Aethernia_Knight_AttackL1", gp.tileSize*2, gp.tileSize);
+        attackL2 = setup("/player/Aethernia_Knight_AttackL2", gp.tileSize*2, gp.tileSize);
+        attackR1 = setup("/player/Aethernia_Knight_AttackR1", gp.tileSize*2, gp.tileSize);
+        attackR2 = setup("/player/Aethernia_Knight_AttackR2", gp.tileSize*2, gp.tileSize);
 
-            image = ImageIO.read(getClass().getResourceAsStream("/player/" + imageName + ".png"));
-            image = uTool.scaleImage(image, gp.tileSize, gp.tileSize);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return  image;
     }
 
     public void update() {
-        if (keyH.upPressed == false || keyH.downPressed == false || keyH.leftPressed == false || keyH.rightPressed == false) {
+
+        if (attacking == true) {
+            attacking();
+        }
+
+        if (keyH.upPressed == false || keyH.downPressed == false || keyH.leftPressed == false || keyH.rightPressed == false || keyH.interactionPressed == false) {
             direction = "idle";
-            spriteCounter++;
-            if (spriteCounter > 40) {
+            idleCounter++;
+            if (idleCounter > 20) {
                 if (spriteNum == 1) {
                     spriteNum = 2;
                 } else if (spriteNum == 2) {
                     spriteNum = 1;
                 }
-                spriteCounter = 0;
+                idleCounter = 0;
             }
 
-            if (keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true) {
+            if (keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true || keyH.interactionPressed == true) {
                 if (keyH.upPressed == true) {
                     direction = "up";
 
@@ -118,8 +131,19 @@ public class Player extends Entity{
                 int objIndex = gp.colChecker.checkObject(this, true);
                 pickUpObject(objIndex);
 
+                //Check NPC collision
+                int npcIndex = gp.colChecker.checkEntity(this, gp.npc);
+                interactNPC(npcIndex);
+
+                //Check Monster collision
+                int monsterIndex = gp.colChecker.checkEntity(this,gp.monster);
+                contactMonster(monsterIndex);
+
+                //Check Event
+                gp.eHandler.checkEvent();
+
                 //if collision is false then player can move
-                if(CollisionOn == false) {
+                if(CollisionOn == false && keyH.interactionPressed == false) {
 
                     switch (direction) {
                         case "up":
@@ -136,10 +160,11 @@ public class Player extends Entity{
                             break;
                     }
                 }
+                gp.keyH.interactionPressed = false;
 
                 //Animation Counter
                 spriteCounter++;
-                if (spriteCounter > 20) {
+                if (spriteCounter > 40) {
                     if (spriteNum == 1) {
                         spriteNum = 2;
                     } else if (spriteNum == 2) {
@@ -147,6 +172,86 @@ public class Player extends Entity{
                     }
                     spriteCounter = 0;
                 }
+            }
+        }
+
+        // Invincible state for player
+        if(invincible == true) {
+            invincibleCounter++;
+            if(invincibleCounter > 60) {
+                invincible = false;
+                invincibleCounter = 0;
+            }
+        }
+    }
+
+    public void attacking() {
+        attackCounter++;
+        if(attackCounter <= 5) {
+            spriteNum = 1;
+        }
+        if(attackCounter > 5 && attackCounter <= 25) {
+            spriteNum = 2;
+
+            //Hit Detection
+            int currentWorldX = worldX;
+            int currentWorldY = worldY;
+            int solidAreaWidth = solidArea.width;
+            int solidAreaHeight = solidArea.height;
+
+            //adjust player's worldX/Y for the attackArea
+            switch (direction) {
+                case "up":
+                    worldY -= attackArea.height;
+                    break;
+                case "down":
+                    worldY += attackArea.height;
+                    break;
+                case "left":
+                    worldX -= attackArea.width;
+                    break;
+                case "right":
+                    worldX += attackArea.width;
+                    break;
+            }
+
+            //attack area becomes solid
+            solidArea.width = attackArea.width;
+            solidArea.height = attackArea.height;
+
+            //Monster Collision
+            int monsterIndex = gp.colChecker.checkEntity(this, gp.monster);
+            damageMonster(monsterIndex);
+
+            worldX = currentWorldX;
+            worldY = currentWorldY;
+            solidArea.width = solidAreaWidth;
+            solidArea.height = solidAreaHeight;
+        }
+        if(attackCounter > 25) {
+            spriteNum = 1;
+            attackCounter = 0;
+            attacking = false;
+        }
+    }
+
+    public void contactMonster(int i) {
+
+        if(i != 999) {
+
+            if(invincible == false) {
+                life -= 1;
+                invincible = true;
+            }
+        }
+    }
+
+    public void damageMonster(int i) {
+
+        if(i != 999) {
+            gp.monster[i].life -= 4;
+            if(gp.monster[i].life == 0 || gp.monster[i].life > 0) {
+                gp.monster[i] = null;
             }
         }
     }
@@ -190,10 +295,27 @@ public class Player extends Entity{
                     gp.ui.showMessage("Picked up chest key!");
                     break;
                 case "Chest":
-                    gp.ui.gameEnd = true;
-                    gp.stopMusic();
-                    gp.playSE(4);
+                    if (hasChestKey != 0) {
+                        hasChestKey--;
+                        gp.ui.gameEnd = true;
+                        gp.stopMusic();
+                        gp.playSE(5);
+                    } else if (hasChestKey == 0) {
+                        gp.ui.showMessage("Locked...");
+                    }
                     break;
+            }
+        }
+    }
+
+    public void interactNPC(int i) {
+
+        if(gp.keyH.interactionPressed == true) {
+            if(i != 999) {
+                gp.gameState = gp.dialogueState;
+                gp.npc[i].speak();
+            } else {
+                attacking = true;
             }
         }
     }
@@ -203,49 +325,111 @@ public class Player extends Entity{
         //g2.fillRect(x, y, gp.tileSize, gp.tileSize);
 
         BufferedImage image = null;
+        int tempScreenX = screenX;
+        int tempScreenY = screenY;
 
         switch (direction) {
             case "up":
-                if (spriteNum == 1) {
-                    image = up1;
+                if (attacking == false) {
+                    if (spriteNum == 1) {
+                        image = up1;
+                    }
+                    if (spriteNum == 2) {
+                        image = up2;
+                    }
                 }
-                if (spriteNum == 2) {
-                    image = up2;
+                if (attacking == true) {
+                    tempScreenY = screenY - gp.tileSize;
+                    if (spriteNum == 1) {
+                        image = attackU1;
+                    }
+                    if (spriteNum == 2) {
+                        image = attackU2;
+                    }
                 }
                 break;
             case "right":
-                if (spriteNum == 1) {
-                    image = right1;
+                if (attacking == false) {
+                    if (spriteNum == 1) {
+                        image = right1;
+                    }
+                    if (spriteNum == 2) {
+                        image = right2;
+                    }
                 }
-                if (spriteNum == 2) {
-                    image = right2;
+                if (attacking == true) {
+                    //tempScreenX = screenX + gp.tileSize;
+                    if (spriteNum == 1) {
+                        image = attackR1;
+                    }
+                    if (spriteNum == 2) {
+                        image = attackR2;
+                    }
                 }
                 break;
             case "left":
-                if (spriteNum == 1) {
-                    image = left1;
+                if (attacking == false) {
+                    if (spriteNum == 1) {
+                        image = left1;
+                    }
+                    if (spriteNum == 2) {
+                        image = left2;
+                    }
                 }
-                if (spriteNum == 2) {
-                    image = left2;
+                if (attacking == true) {
+                    tempScreenX = screenX - gp.tileSize;
+                    if (spriteNum == 1) {
+                        image = attackL1;
+                    }
+                    if (spriteNum == 2) {
+                        image = attackL2;
+                    }
                 }
                 break;
             case "down":
-                if (spriteNum == 1) {
-                    image = down1;
+                if (attacking == false) {
+                    if (spriteNum == 1) {
+                        image = down1;
+                    }
+                    if (spriteNum == 2) {
+                        image = down2;
+                    }
                 }
-                if (spriteNum == 2) {
-                    image = down2;
+                if (attacking == true) {
+                    //tempScreenY = screenY + gp.tileSize;
+                    if (spriteNum == 1) {
+                        image = attackD1;
+                    }
+                    if (spriteNum == 2) {
+                        image = attackD2;
+                    }
                 }
                 break;
             case "idle":
-                if (spriteNum == 1) {
-                    image = idle1;
-                }
-                if (spriteNum == 2) {
-                    image = idle2;
+                if (attacking == true) {
+                    if (spriteNum == 1) {
+                        image = attackR1;
+                    }
+                    if (spriteNum == 2) {
+                        image = attackR2;
+                    }
+                } else if (attacking == false) {
+                    if (spriteNum == 1) {
+                        image = idle1;
+                    }
+                    if (spriteNum == 2) {
+                        image = idle2;
+                    }
                 }
                 break;
         }
-        g2.drawImage(image, screenX, screenY, gp.tileSize, gp.tileSize, null);
+        g2.drawImage(image, tempScreenX, tempScreenY, null);
+
+        //DEBUG
+        /*
+        g2.setFont(new Font("Arial", Font.PLAIN, 26));
+        g2.setColor(Color.WHITE);
+        g2.drawString("Invincible : " + invincibleCounter, 60, 400);
+         */
     }
 }

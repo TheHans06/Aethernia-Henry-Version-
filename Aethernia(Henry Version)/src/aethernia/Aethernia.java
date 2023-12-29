@@ -33,5 +33,4 @@ public class Aethernia {
         gamePanel.setupGame();
         gamePanel.startGameThread();
     }
-    
 }

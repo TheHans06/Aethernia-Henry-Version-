@@ -1,23 +1,21 @@
 package Object;
 
 import aethernia.GamePanel;
+import entity.Entity;
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
 
-public class OBJ_HSword extends SuperObject{
+public class OBJ_HSword extends Entity {
 
     GamePanel gp;
 
     public OBJ_HSword(GamePanel gp) {
 
-        name = "HolySword";
-        try{
-            image = ImageIO.read(getClass().getResourceAsStream("/objects/HolySword.png"));
-            uTool.scaleImage(image, gp.tileSize, gp.tileSize);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super(gp);
+
+        name = "HSword";
+        right1 = setup("/objects/HolySword", gp.tileSize, gp.tileSize);
         collision = true;
     }
 }

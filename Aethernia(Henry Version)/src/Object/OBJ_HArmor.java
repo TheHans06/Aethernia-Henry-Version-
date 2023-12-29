@@ -1,23 +1,21 @@
 package Object;
 
 import aethernia.GamePanel;
+import entity.Entity;
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
 
-public class OBJ_HArmor extends SuperObject{
+public class OBJ_HArmor extends Entity {
 
     GamePanel gp;
 
     public OBJ_HArmor(GamePanel gp) {
 
-        name = "HolyArmor";
-        try{
-            image = ImageIO.read(getClass().getResourceAsStream("/objects/HolyArmor.png"));
-            uTool.scaleImage(image, gp.tileSize, gp.tileSize);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super(gp);
+
+        name = "HArmor";
+        right1 = setup("/objects/HolyArmor", gp.tileSize, gp.tileSize);
         collision = true;
     }
 }
